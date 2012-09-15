@@ -1,6 +1,6 @@
 module GolombCode (golombCode, golombDecode, encodeUnary, decodeUnary, encodeBinary, decodeBinary) where
 import Data.Tuple (swap)
-import Data.List (unfoldr, foldl', genericLength, genericReplicate)
+import Data.List (unfoldr, foldl', genericLength, genericReplicate, genericSplitAt)
 
 
 golombCode :: Integer -> Integer -> [Bool]
@@ -21,5 +21,5 @@ decodeUnary bits = (genericLength ones, rest)
   where (ones, z : rest) = span id bits
 
 decodeBinary modulusBits bits = (int, rest)
-  where (binaryBits, rest) = splitAt (fromIntegral modulusBits) bits
+  where (binaryBits, rest) = genericSplitAt modulusBits bits
         int = foldl' (\ z e -> z * 2 + if e then 1 else 0) 0 binaryBits
