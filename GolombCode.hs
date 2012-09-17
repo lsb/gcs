@@ -44,7 +44,4 @@ golombCodesNoBlocks !modulusBits ints = boolsToBytes (concatMap (golombCode modu
 golombDecodesNoBlocks :: Int -> Int -> [Word8] -> [Int]
 golombDecodesNoBlocks !modulusBits !count word8s = decodeMany count modulusBits (concatMap (encodeBinary 8) word8s)
 
-linewiseDiff :: [Integer] -> [Int]
-linewiseDiff ints = zipWith (\ a b -> fromIntegral (a-b) ) ints (0:ints)
-
 -- test_golomb = quickCheckWith (stdArgs {maxSuccess = 10000}) (\ ints -> let positives = map abs ints in golombDecodesNoBlocks 2 (fromIntegral $ length ints) (golombCodesNoBlocks 2 positives) == positives)
