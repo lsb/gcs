@@ -5,4 +5,4 @@ import Data.Maybe (fromJust)
 import Debug.Trace (traceShow)
 
 main = do [modulusBits] <- getArgs
-          B.interact (B.pack . map (toEnum . fromEnum) . golombCodesNoBlocks (read modulusBits) . linewiseDiff . map (fst . fromJust . B.readInteger) . B.lines)
+          B.interact (B.pack . map (toEnum . fromEnum) . golombCodesNoBlocks (read modulusBits) . map (fst . fromJust . B.readInt) . B.lines)

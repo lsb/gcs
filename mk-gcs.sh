@@ -15,9 +15,7 @@ linecount=`gzip -cd $input | wc -l`
 
 modulus=$(( linecount * fp ))
 
-#sort -n can't handle bigints
-export LC_ALL=C
-gzip -cd $input | ./make-hash-sequences $modulus | awk -v len=${#modulus} '{ printf("% " len "s\n",$1) }' | sort -S 50% -u | tr -d ' ' | gzip -c1 > $hashes
+gzip -cd $input | ./make-hash-sequences $modulus | gzip -c1 > $hashes
 
 for i in 4 5 6 7 8 9 10 11 ; do
   seqname=`mktemp`
