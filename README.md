@@ -1,4 +1,4 @@
 gcs
 ===
 
-Golomb-compressed sequences (with indices)
+Golomb-compressed sequences (with indices) for large datasets
