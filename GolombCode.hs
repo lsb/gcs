@@ -4,26 +4,26 @@ import Data.List (unfoldr, foldl')
 import Data.Word
 
 golombCode :: Int -> Int -> [Bool]
-golombCode !modulusBits !integer = encodeUnary quotient ++ encodeBinary modulusBits remainder
-  where (quotient, remainder) = integer `divMod` (2 ^ modulusBits)
+golombCode !unaryBits !integer = encodeUnary quotient ++ encodeBinary unaryBits remainder
+  where (quotient, remainder) = integer `divMod` (2 ^ unaryBits)
 
 encodeUnary !quotient = go quotient [False]
   where go 0 bits = bits
         go !n bits = go (n-1) (True : bits)
 
-encodeBinary !modulusBits !integer = reverse $ unfoldr numToBools (modulusBits,integer)
+encodeBinary !unaryBits !integer = reverse $ unfoldr numToBools (unaryBits,integer)
   where numToBools (!mB,!i) = if mB == 0 then Nothing else Just (odd i, (mB-1, i `div` 2))
 
 golombDecode :: Int -> [Bool] -> (Int, [Bool])
-golombDecode modulusBits bits = (quotient * (2 ^ modulusBits) + remainder, rest)
+golombDecode unaryBits bits = (quotient * (2 ^ unaryBits) + remainder, rest)
   where (!quotient, binaryAndRest) = decodeUnary bits
-        (!remainder, rest) = decodeBinary modulusBits binaryAndRest
+        (!remainder, rest) = decodeBinary unaryBits binaryAndRest
 
 decodeUnary bits = (length ones, rest)
   where (ones, z : rest) = span id bits
 
-decodeBinary modulusBits bits = (int, rest)
-  where (binaryBits, rest) = splitAt modulusBits bits
+decodeBinary unaryBits bits = (int, rest)
+  where (binaryBits, rest) = splitAt unaryBits bits
         int = boolsToInt binaryBits
 
 boolsToInt :: (Num a) => [Bool] -> a
@@ -34,15 +34,15 @@ boolsToBytes (b7:(b6:(b5:(b4:(b3:(b2:(b1:(b0:nextBytes)))))))) padding = (boolsT
 boolsToBytes [] padding = []
 boolsToBytes fewBitsShort padding = [boolsToInt $ take 8 $ fewBitsShort ++ repeat padding]
 
-decodeMany 0 modulusBits bits = []
-decodeMany !n modulusBits bits = i : (decodeMany (n-1) modulusBits rest)
-  where (i,rest) = golombDecode modulusBits bits
+decodeMany 0 unaryBits bits = []
+decodeMany !n unaryBits bits = i : (decodeMany (n-1) unaryBits rest)
+  where (i,rest) = golombDecode unaryBits bits
 
 golombCodesNoBlocks :: Int -> [Int] -> [Word8]
-golombCodesNoBlocks !modulusBits ints = boolsToBytes (concatMap (golombCode modulusBits) ints) False
+golombCodesNoBlocks !unaryBits ints = boolsToBytes (concatMap (golombCode unaryBits) ints) False
 
-golombDecodesNoBlocks :: Int -> Int -> [Word8] -> [Int]
-golombDecodesNoBlocks !modulusBits !count word8s = decodeMany count modulusBits (concatMap (encodeBinary 8) word8s)
+golombDecodesNoBlocks :: Int -> Integer -> [Word8] -> [Int]
+golombDecodesNoBlocks !unaryBits !count word8s = decodeMany count unaryBits (concatMap (encodeBinary 8) word8s)
 
 linewiseDiff :: [Integer] -> [Int]
 linewiseDiff ints = zipWith (\ a b -> fromIntegral (a-b) ) ints (0:ints)
