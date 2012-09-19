@@ -1,6 +1,6 @@
 function golombFilterQueries(lineCount, modulus, binaryBits, golombCodedSequence, queries) { // queries :: [(String, kWin :: IO (), kFail :: IO ())]
-    var queriesHashes = _.map(queries, function(s_kW_kF) { return [hashMod(modulus,string), s_kW_kF[1], s_kW_kF[2]] });
-    var sortedHashes = _.sortBy(queriesHashes, function(s_kW_kF) { return s_kW_kF[0] });
+    var queriesHashes = queries.map(function(s_kW_kF) { return [hashMod(modulus,s_kW_kF[0]), s_kW_kF[1], s_kW_kF[2]] });
+    var sortedHashes = queriesHashes.sort(function(s_kW_kF1, s_kW_kF2) { return s_kW_kF1[0] - s_kW_kF2[0] });
     fastGolombDecodeIsectK(lineCount, binaryBits, golombCodedSequence, sortedHashes);
 }
 
