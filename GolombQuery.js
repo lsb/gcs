@@ -9,7 +9,7 @@ function hashMod(modulus, string) {
     // we use JS integers (doubles) instead of big ints because even at 0.001% FP rate, you'd need well over a quadrillion values inserted into your sequence, by which point you'd probably need an index
 }
 
-// fastGolombDecode decodes lineCount bytes from the start of a base64-encoded golomb-coded sequence in the string bytes.
+// fastGolombDecode decodes lineCount bytes from the start of a base64-encoded golomb-coded sequence in the string bytes, fuses the iterative sum, and the set intersection with queries.
 // the code is identical to the haskell original except that the tail recursion has been hand-compiled to an imperative loop, and the input is base64-encoded.
 // (can you imagine starting off with half a dozen crazy different conditions, if you *didn't* have referential transparency?)
 function fastGolombDecodeIsectK(lineCount, binaryBits, bytes, queries) {
@@ -17,11 +17,10 @@ function fastGolombDecodeIsectK(lineCount, binaryBits, bytes, queries) {
     var mapping = {};
     alphabet.split(/(?=.)/).forEach(function(char,i) { mapping[char] = i });
     var sequenceAccumulator = 0;
-    var unary = true, intPtr = 0, bytePtr = 0, bitIndex = 0, currentWord = 0, intBitsRemaining = 0, currentIntAccum = 0, intsRemaining = 0;
+    var unary = true, bytePtr = 0, bitIndex = 0, currentWord = 0, intBitsRemaining = 0, currentIntAccum = 0, intsRemaining = 0;
     bitIndex = -1;
     intsRemaining = lineCount;
     while (true) {
-	// console.log(unary ? "unary" : "binary", "intPtr", intPtr, "bytePtr", bytePtr, "bitIndex", bitIndex, "currentWord", currentWord, "intBitsRemaining", intBitsRemaining, "currentIntAccum", currentIntAccum, "intsRemaining", intsRemaining);
 	if(!unary) {
 	    if(intBitsRemaining == 0) {
 		sequenceAccumulator += currentIntAccum;
