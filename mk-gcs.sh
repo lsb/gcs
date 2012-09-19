@@ -29,5 +29,5 @@ gzip -cd $input | ./make-hash-sequences $modulus | awk -v len=${#modulus} '{ pri
 
 outputlinecount=`gzip -cd $hashes | wc -l`
 echo "{'lineCount': ${outputlinecount}, 'modulus': ${modulus}, 'unaryBits': ${unarybits}}" > /dev/stderr
-gzip -cd $hashes | ./golomb-compressed-sequences $unarybits
+gzip -cd $hashes | ./golomb-encode $unarybits
 rm $input $hashes
