@@ -23,8 +23,8 @@ decodeUnary bits = (length ones, rest)
   where (ones, z : rest) = span id bits
 
 decodeBinary binaryBits bits = (int, rest)
-  where (binaryBits, rest) = splitAt binaryBits bits
-        int = boolsToInt binaryBits
+  where (binary, rest) = splitAt binaryBits bits
+        int = boolsToInt binary
 
 boolsToInt :: (Num a) => [Bool] -> a
 boolsToInt = foldl' (\ z e -> z*2 + (if e then 1 else 0)) 0
