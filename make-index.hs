@@ -4,11 +4,9 @@ main = do [unaryBits, indexFrequency] <- getArgs
           interact (show . every (read indexFrequency) . sumsBitcounts (read unaryBits) . map read . lines)
 
 sumsBitcounts :: Integer -> [Integer] -> [[Integer]]
-sumsBitcounts unaryBits = map pairToSum . linewisePairsSum . map (\ di -> (di, sizeof unaryBits di) ) . linewiseDiff
+sumsBitcounts unaryBits = linewiseTupleSum . map (\ di -> [di, sizeof unaryBits di, 1] ) . linewiseDiff
 
-pairToSum (a,b) = [a,b]
-
-linewisePairsSum = scanl1 (\ (xTot,yTot) (x,y) -> (xTot+x, yTot+y) )
+linewiseTupleSum = scanl1 (zipWith (+))
 
 linewiseDiff is = zipWith (-) is (0:is)
 
