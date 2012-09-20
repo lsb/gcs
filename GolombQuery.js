@@ -1,7 +1,7 @@
-function golombFilterQueries(lineCount, modulus, binaryBits, golombCodedSequence, queries) { // queries :: [(String, kWin :: IO (), kFail :: IO ())]
+function golombFilterQueries(lineCount, modulus, binaryBits, golombCodedSequence, queries, partialSumBitcounts) { // queries :: [(String, kWin :: IO (), kFail :: IO ())]
     var queriesHashes = queries.map(function(s_kW_kF) { return [hashMod(modulus,s_kW_kF[0]), s_kW_kF[1], s_kW_kF[2]] });
     var sortedHashes = queriesHashes.sort(function(s_kW_kF1, s_kW_kF2) { return s_kW_kF1[0] - s_kW_kF2[0] });
-    fastGolombDecodeIsectK(lineCount, binaryBits, golombCodedSequence, sortedHashes);
+    fastGolombDecodeIsectK(lineCount, binaryBits, golombCodedSequence, sortedHashes, partialSumBitcounts);
 }
 
 function hashMod(modulus, string) {
@@ -11,8 +11,8 @@ function hashMod(modulus, string) {
 
 // fastGolombDecode decodes lineCount bytes from the start of a base64-encoded golomb-coded sequence in the string bytes, fuses the iterative sum, and the set intersection with queries.
 // the code is identical to the haskell original except that the tail recursion has been hand-compiled to an imperative loop, and the input is base64-encoded.
-// (can you imagine starting off with half a dozen crazy different conditions, if you *didn't* have referential transparency?)
-function fastGolombDecodeIsectK(lineCount, binaryBits, bytes, queries) {
+// it also skips ahead based on partial sums and bit positions collected in an index.
+function fastGolombDecodeIsectK(lineCount, binaryBits, bytes, queries, partialSumBitcounts) {
     var alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
     var mapping = {};
     alphabet.split(/(?=.)/).forEach(function(char,i) { mapping[char] = i });
@@ -21,6 +21,7 @@ function fastGolombDecodeIsectK(lineCount, binaryBits, bytes, queries) {
     bitIndex = -1;
     intsRemaining = lineCount;
     while (true) {
+	//console.log("unary?", unary, "firstQuery", JSON.stringify(queries[0]), "firstIndexItem", JSON.stringify(partialSumBitcounts[0]), "bytePtr", bytePtr, "bitIndex", bitIndex, "currentWord", currentWord.toString(2), "intBitsRemaining", intBitsRemaining, "currentIntAccum", currentIntAccum.toString(2), "intsRemaining", intsRemaining);
 	if(!unary) {
 	    if(intBitsRemaining == 0) {
 		sequenceAccumulator += currentIntAccum;
@@ -28,7 +29,7 @@ function fastGolombDecodeIsectK(lineCount, binaryBits, bytes, queries) {
 		    queries[0][2]();
 		    queries.shift();
 		} else {
-		    while(sequenceAccumulator == queries[0][0]) {
+		    while(queries.length > 0 && sequenceAccumulator == queries[0][0]) {
 			queries[0][1]();
 			queries.shift();
 		    }
@@ -39,6 +40,19 @@ function fastGolombDecodeIsectK(lineCount, binaryBits, bytes, queries) {
 		// currentWord stays as is
 		currentIntAccum = 0;
 		intsRemaining -= 1;
+
+		while(partialSumBitcounts.length > 0 && partialSumBitcounts[0][0] < queries[0][0]) {
+		    sequenceAccumulator = partialSumBitcounts[0][0];
+		    bitIndex = 5 - (partialSumBitcounts[0][1] % 6);
+		    bytePtr = (partialSumBitcounts[0][1] - (5 - bitIndex)) / 6;
+		    currentWord = mapping[bytes[bytePtr]];
+		    bytePtr += 1; // bytePtr points to (tail word8s).
+		    intsRemaining = lineCount - partialSumBitcounts[0][2];
+		    //console.log("pulled off an index entry, indices and queries are ", JSON.stringify(partialSumBitcounts), JSON.stringify(queries), "bytePtr", bytePtr, "bitIndex", bitIndex);
+		    partialSumBitcounts = partialSumBitcounts.slice(1);
+		}
+		//console.log("sequence accumulator", sequenceAccumulator, "first query", JSON.stringify(queries[0]));
+
 	    } else if(bitIndex == -1) {
 		bitIndex = 5;
 		currentWord = mapping[bytes[bytePtr]];
