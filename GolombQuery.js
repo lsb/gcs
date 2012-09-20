@@ -1,7 +1,7 @@
 function golombFilterQueries(lineCount, modulus, binaryBits, golombCodedSequence, queries, partialSumBitcounts) { // queries :: [(String, kWin :: IO (), kFail :: IO ())]
     var queriesHashes = queries.map(function(s_kW_kF) { return [hashMod(modulus,s_kW_kF[0]), s_kW_kF[1], s_kW_kF[2]] });
     var sortedHashes = queriesHashes.sort(function(s_kW_kF1, s_kW_kF2) { return s_kW_kF1[0] - s_kW_kF2[0] });
-    fastGolombDecodeIsectK(lineCount, binaryBits, golombCodedSequence, sortedHashes, partialSumBitcounts);
+    fastGolombDecodeIsectK(lineCount, binaryBits, golombCodedSequence, sortedHashes, partialSumBitcounts.slice(0));
 }
 
 function hashMod(modulus, string) {
@@ -19,19 +19,25 @@ function fastGolombDecodeIsectK(lineCount, binaryBits, bytes, queries, partialSu
     var sequenceAccumulator = 0;
     var unary = true, bytePtr = 0, bitIndex = 0, currentWord = 0, intBitsRemaining = 0, currentIntAccum = 0, intsRemaining = 0;
     bitIndex = -1;
+    var firstQueryHash = queries[0][0];
+    var firstPartialSum = partialSumBitcounts[0][0];
     intsRemaining = lineCount;
     while (true) {
 	//console.log("unary?", unary, "firstQuery", JSON.stringify(queries[0]), "firstIndexItem", JSON.stringify(partialSumBitcounts[0]), "bytePtr", bytePtr, "bitIndex", bitIndex, "currentWord", currentWord.toString(2), "intBitsRemaining", intBitsRemaining, "currentIntAccum", currentIntAccum.toString(2), "intsRemaining", intsRemaining);
 	if(!unary) {
 	    if(intBitsRemaining == 0) {
 		sequenceAccumulator += currentIntAccum;
-		if(sequenceAccumulator > queries[0][0]) {
+		if(sequenceAccumulator > firstQueryHash) {
 		    queries[0][2]();
 		    queries.shift();
+		    if(queries.length > 0) {
+ 			firstQueryHash = queries[0][0];
+		    }
 		} else {
-		    while(queries.length > 0 && sequenceAccumulator == queries[0][0]) {
+		    while(queries.length > 0 && sequenceAccumulator == firstQueryHash) {
 			queries[0][1]();
 			queries.shift();
+			firstQueryHash = queries[0][0];
 		    }
 		}
 		if(queries.length == 0) return;
@@ -41,7 +47,7 @@ function fastGolombDecodeIsectK(lineCount, binaryBits, bytes, queries, partialSu
 		currentIntAccum = 0;
 		intsRemaining -= 1;
 
-		while(partialSumBitcounts.length > 0 && partialSumBitcounts[0][0] < queries[0][0]) {
+		while(partialSumBitcounts.length > 0 && firstPartialSum < firstQueryHash) {
 		    sequenceAccumulator = partialSumBitcounts[0][0];
 		    bitIndex = 5 - (partialSumBitcounts[0][1] % 6);
 		    bytePtr = (partialSumBitcounts[0][1] - (5 - bitIndex)) / 6;
@@ -49,7 +55,8 @@ function fastGolombDecodeIsectK(lineCount, binaryBits, bytes, queries, partialSu
 		    bytePtr += 1; // bytePtr points to (tail word8s).
 		    intsRemaining = lineCount - partialSumBitcounts[0][2];
 		    //console.log("pulled off an index entry, indices and queries are ", JSON.stringify(partialSumBitcounts), JSON.stringify(queries), "bytePtr", bytePtr, "bitIndex", bitIndex);
-		    partialSumBitcounts = partialSumBitcounts.slice(1);
+		    partialSumBitcounts.shift();
+		    firstPartialSum = partialSumBitcounts[0][0];
 		}
 		//console.log("sequence accumulator", sequenceAccumulator, "first query", JSON.stringify(queries[0]));
 
