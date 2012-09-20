@@ -6,9 +6,9 @@ then
   fp=100
 fi
 unarybits=$2
-if [ -z $unarybits ]
+if [ -z $binarybits ]
 then
-  unarybits=`awk "BEGIN { print int(log($fp)/log(2)) }"`
+  binarybits=`awk "BEGIN { print int(log($fp)/log(2)) }"`
 fi
 
 input=`mktemp`
@@ -34,14 +34,14 @@ fi
 export LC_ALL=C
 gzip -cd $input | ./make-hash-sequences $modulus | awk -v len=${#modulus} '{ printf("% " len "s\n",$1) }' | sort -S 50% -u | tr -d ' ' | gzip -c1 > $hashes
 
-gzip -cd $hashes | ./golomb-encode $unarybits > $sequence
+gzip -cd $hashes | ./golomb-encode $binarybits > $sequence
 
 outputlinecount=`gzip -cd $hashes | wc -l`
 (echo '{'
   echo '"lineCount":' ${outputlinecount},
   echo '"modulus":' ${modulus},
-  echo '"unaryBits":' ${unarybits},
-  echo -n '"partialSumBitcounts":' ; gzip -cd $hashes | ./make-index $unarybits $indexfrequency ; echo ,
+  echo '"binaryBits":' ${binarybits},
+  echo -n '"partialSumBitcounts":' ; gzip -cd $hashes | ./make-index $binarybits $indexfrequency ; echo ,
   echo -n '"b64EncodedGolombCodedSequence": "' ; ./base-64-encode < $sequence ; echo '"'
 echo '}') > /dev/stderr
 
