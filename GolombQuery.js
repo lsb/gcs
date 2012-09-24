@@ -6,7 +6,7 @@ function golombFilterQueries(lineCount, modulus, binaryBits, golombCodedSequence
 
 function hashMod(modulus, string) {
     return BigInteger.parse(hex_md5(string),16).remainder(BigInteger(modulus)).toJSValue();
-    // we use JS integers (doubles) instead of big ints because even at 0.001% FP rate, you'd need well over a quadrillion values inserted into your sequence, by which point you'd probably need an index
+    // we return JS integers (doubles) instead of big ints because even at 0.001% FP rate, you'd need well over a quadrillion values inserted into your sequence for it to matter
 }
 
 // fastGolombDecode decodes lineCount bytes from the start of a base64-encoded golomb-coded sequence in the string bytes, fuses the iterative sum, and the set intersection with queries.
@@ -37,7 +37,9 @@ function fastGolombDecodeIsectK(lineCount, binaryBits, bytes, queries, partialSu
 		    while(queries.length > 0 && sequenceAccumulator == firstQueryHash) {
 			queries[0][1]();
 			queries.shift();
-			firstQueryHash = queries[0][0];
+			if(queries.length > 0) {
+			    firstQueryHash = queries[0][0];
+			}
 		    }
 		}
 		if(queries.length == 0) return;
@@ -56,7 +58,7 @@ function fastGolombDecodeIsectK(lineCount, binaryBits, bytes, queries, partialSu
 		    intsRemaining = lineCount - partialSumBitcounts[0][2];
 		    //console.log("pulled off an index entry, indices and queries are ", JSON.stringify(partialSumBitcounts), JSON.stringify(queries), "bytePtr", bytePtr, "bitIndex", bitIndex);
 		    partialSumBitcounts.shift();
-		    firstPartialSum = partialSumBitcounts[0][0];
+		    if(partialSumBitcounts.length > 0) firstPartialSum = partialSumBitcounts[0][0];
 		}
 		//console.log("sequence accumulator", sequenceAccumulator, "first query", JSON.stringify(queries[0]));
 
