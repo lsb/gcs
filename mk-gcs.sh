@@ -19,6 +19,7 @@ do
 	    ;;
 	p)
 	    fp=$OPTARG
+	    modulus=$(( linecount * fp ))
 	    ;;
 	b)
 	    binarybits=$OPTARG
